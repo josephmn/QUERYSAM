@@ -1,0 +1,5 @@
+SWIMBAS = 0, 0, 0, 0, C
+Applic_DH = 0, 0, 0, 0, C
+SolomonVBTApp = 0, 0, 0, 0, C
+new_form = 0, 0, 0, 0, C, 0, 0, 0, 0, C
+Form1 = 0, 0, 0, 0, C, 22, 22, 1175, 641, C

@@ -1,0 +1,31 @@
+
+
+SELECT BatNbr, RefNbr, * 
+-- UPDATE A SET ACCT = '421213'
+FROM APDOC A WHERE BatNbr = '006108' 
+
+
+SELECT * 
+-- UPDATE A SET ACCT = '421213'
+FROM APTran A WHERE BatNbr = '006108' AND Acct = '419102'
+
+
+SELECT * 
+-- UPDATE A SET ACCT = '421213'
+FROM GLTran A WHERE BatNbr = '006108' AND Module = 'AP' AND Acct = '419102'
+
+
+
+SELECT * 
+
+FROM APAdjust WHERE AdjdRefNbr = '007089'
+
+
+SELECT * 
+
+FROM APDOC WHERE BatNbr = '006145'
+
+
+SELECT * 
+
+FROM APTran WHERE BatNbr = '006145'

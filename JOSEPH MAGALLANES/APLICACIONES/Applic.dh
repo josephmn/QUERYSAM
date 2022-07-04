@@ -1,0 +1,533 @@
+Attribute VB_Name = "Applic_DH"
+
+'/************************************************************************
+'* Solomon IV (tm) for Windows (tm)
+'* Copyright Solomon Software (TLB, Inc.) 1993-1995. All Rights Reserved.
+'*
+'* File Name     : applic.dh
+'*
+'* Narrative     : Contains definitions needed for creating RDT applications.
+'*
+'************************************************************************/
+Option Explicit
+' MUST match corresponding define in define.h and swim.bas
+Global Const APPLIC_VER = "00.26"
+Global Const PARENT_VER = "00.25"
+
+Type SumInteger     ' Declare of field to be passed to sum(integer_field) fetch statement
+    l As Long
+End Type
+
+Type Sdate
+    l As Long
+End Type
+
+Type Stime
+    l As Long
+End Type
+
+Type Sinteger
+    l As Integer
+End Type
+
+Type Ssingle
+    l As Single
+End Type
+
+Type Sdouble
+    l As Double
+End Type
+
+Type Sstring
+    l As String
+End Type
+
+Type Slong
+    l As Long
+End Type
+
+'   Important dcls follow
+Global Const MinLVARLen = 257  ' Min nbr of bytes for LVAR field
+Global NL As String * 2        ' Newline (carraige return, line feed)
+Global PRMSEP As String        ' Application parameter seperator.
+Global Const NoAutoChk = 0     ' Suppress any auto error checking SWIM would normally perform (e.g. pvchk()) after a CHK event is finished
+Global Const NoAction = 0      ' Suppress any default action SWIM would normally perform when the event code has returned
+Global Const ErrNoMess = 32000    ' Suppress error display SWIM would normally perform (e.g. pvchk()) if CHK returns error value
+Global Const Finished = 32000  ' value of "level" in Update event, after other levels process sucessfully
+Global Const UpdateStart = 32001 'UpdateStart pass of Update1
+Global Const IntMax = 32767
+Global Const IntMin = -32768
+Global Const MaxLineNbrInc = 1  ' used for detail line numbering
+                                ' Note this DOES NOT correspond to the
+                                ' system's renumbering logic; this is
+                                ' for application use only
+Global Const FltMax = 3.402823E+38
+Global Const OVERFLOW = FltMax
+Global Const PREC_OVERFLOW = 16
+Global Const EXCEPTION_ON = -1          ' used in sqlerrexception
+Global Const EXCEPTION_OFF = 0          ' used in sqlerrexception
+Global Const RETURN_ALL_ERRVALS = -9999 ' used in sqlerrexception
+
+' Used as 1st parm to Status() call
+Global Const EndProcess = -2
+Global Const StartProcess = -3
+Global Const SaveGoodArgVals = -4
+Global Const SetEntityType = -5
+Global Const StopProcess = -6
+
+' Used as 4th parm to Status() call
+Global Const LOG_ONLY = 1
+Global Const DISP_ONLY = 2
+Global Const LOG_AND_DISP = 3
+
+' property id to be passed to setprop
+Global Const PROP_VISIBLE = "visible"
+Global Const PROP_DEFAULT = "default"
+Global Const PROP_BLANKERR = "blankerr"
+Global Const PROP_ENABLED = "enabled"
+Global Const PROP_MASK = "mask"
+Global Const PROP_CUSTLIST = "list"
+Global Const PROP_TABSTOP = "tabstop"
+Global Const PROP_MIN = "min"
+Global Const PROP_MAX = "max"
+Global Const PROP_HEADING = "heading"
+Global Const PROP_CAPTION = "caption"
+
+
+Global Const LTRUE = 1     ' XQL logical TRUE
+Global Const LFALSE = 0    ' XQL logical FALSE
+Global Const SQLWILDSTRING = "%"    ' SQL wildcard for "like" restriction
+Global Const SQLWILDCHAR = "_"    ' SQL wildcard for "like" restriction, 1 char
+
+'  sqlcursor() and sqlcursorex() parameter defines
+Global Const SqlList = 32           ' Buffer rows (read ahead) defined by this cursor
+Global Const SqlUpdate = 0          ' For upward compatability only
+Global Const SqlLock = &H1000       ' Every row fetched with this type of cursor will be immediately locked.
+                                                    ' Rows fetched with this type of cursor should only be fetched
+                                                    ' within a transaction (to avoid db server dependant behavior).
+Global Const SqlFastReadOnly = &H100 ' No updates,inserts, or deletes will be performed on the cursor.
+                                                    ' NOTE: Cursors with this flag cannot access tables which
+                                            '       other cursors have updated in the same transaction.
+Global Const SqlNoSelect = &H200    ' Indicates that the cursor will be used with any sql statement
+                                                    ' except Select.  Update and Delete statements will be the most
+                                                    ' common usage of this type of cursor.
+Global Const SqlNoList = &H400      ' This flag instructs SWIM not to perform any buffering on this
+                                                    ' cursor during sfetch calls.
+Global Const SqlSingleRow = &H2000  ' Indicates cursor will never read more then 1 row after each select
+                                                    ' statement (or stored procedure containing a select statement) has
+                                                    ' been compiled. sfetch calls with this type of cursor should not be
+                                                    ' separated from the associated sql call by any other db I/O.  The
+                                                    ' easiest way to accomplish this is via the sqlfetch functon.  Update,
+                                                    ' inserts, and deletes are allowed with this type of cursor.
+Global Const SqlSystemDb = &H4000   ' Cursor is only to be used for system db tables
+Global Const SqlReadOnly = &H8000   ' No updates,inserts, or deletes will be performed on the cursor.
+                                  ' NOTE: This flag also implies a simple Fetch First,
+                                  ' Fetch Next call sequence.  Once NOTFOUND is returned,
+                                  ' no more Fetch calls can be sent.
+Global Const NOLEVEL = 15
+Global Const LEVEL0 = 0
+Global Const LEVEL1 = 1
+Global Const LEVEL2 = 2
+Global Const LEVEL3 = 3
+Global Const LEVEL4 = 4
+Global Const LEVEL5 = 5
+Global Const LEVEL6 = 6
+Global Const LEVEL7 = 7
+Global Const LEVEL8 = 8
+Global Const LEVEL9 = 9
+
+' memory array line status
+Global Const NEWROW = 0
+Global Const INSERTED = 1
+Global Const UPDATED = 2
+Global Const DELETED = 3
+Global Const NOTCHANGED = 4
+Global Const ABANDONED = 5
+
+
+' The following error codes are guarenteed to be sql portable.  They should
+'   all be declared here as an aid to the person who has already searched
+'   unsuccesfully in the native SQL error code list.
+'   These error numbers contain message text in the Solomon message file.
+Global Const DUPLICATE = 5
+Global Const NOTFOUND = 9
+
+' Setbutton values and subroutine dcl.  All the button ID values can be specified in 1 call (added togather)
+Global Const InsertButton = 1
+Global Const SaveButton = 2
+Global Const DeleteButton = 4
+Global Const CancelButton = 8
+Global Const NextButton = 16
+Global Const PreviousButton = 32
+Global Const FirstButton = 64
+Global Const LastButton = 128
+Global Const CurySelButton = 256
+Global Const CuryTogButton = 512
+Global Const AllLevels = -1
+
+' MsgBox parameters
+Global Const MB_OK = 0                 ' OK button only
+Global Const MB_OKCANCEL = 1           ' OK and Cancel buttons
+Global Const MB_ABORTRETRYIGNORE = 2   ' Abort, Retry, and Ignore buttons
+Global Const MB_YESNOCANCEL = 3        ' Yes, No, and Cancel buttons
+Global Const MB_YESNO = 4              ' Yes and No buttons
+Global Const MB_RETRYCANCEL = 5        ' Retry and Cancel buttons
+
+Global Const MB_ICONSTOP = 16          ' Critical message
+Global Const MB_ICONQUESTION = 32      ' Warning query
+Global Const MB_ICONEXCLAMATION = 48   ' Warning message
+Global Const MB_ICONINFORMATION = 64   ' Information message
+
+Global Const MB_DEFBUTTON1 = 0         ' First button is default
+Global Const MB_DEFBUTTON2 = 256       ' Second button is default
+Global Const MB_DEFBUTTON3 = 512       ' Third button is default
+
+' MsgBox return values
+Global Const IDOK = 1                  ' OK button pressed
+Global Const IDCANCEL = 2              ' Cancel button pressed
+Global Const IDABORT = 3               ' Abort button pressed
+Global Const IDRETRY = 4               ' Retry button pressed
+Global Const IDIGNORE = 5              ' Ignore button pressed
+Global Const IDYES = 6                 ' Yes button pressed
+Global Const IDNO = 7                  ' No button pressed
+
+' MousePointer (form, controls)
+Global Const Default = 0               ' 0 - Default
+Global Const HOURGLASS = 11            ' 11 - Hourglass
+
+' Used by application for floating point calculations;
+' These values will tell SWIM to use default rounding corresponding
+' to each of these types
+Global Const TRANCURY = &HA000
+Global Const BASECURY = &H9000
+Global Const MONEY = &H8000
+Global Const INV_UNIT_QTY = &H4000
+Global Const Units = &H3000             ' Used for both Payroll and JC currently
+Global Const INV_UNIT_PRICE = &H2000
+Global Const PERCENT = &H1000
+
+
+' Use for account type fields.  Only valid if Solomon's default reporting
+' order for chart of accounts is being used (e.g. GLSetup.COAOrder = "A")
+' otherwise the first byte (e.g. the sequence byte) is not accurate)
+Global Const TYPEASSET = "1A"
+Global Const TYPELIABILITY = "2L"
+Global Const TYPEINCOME = "3I"
+Global Const TYPEEXPENSE = "4E"
+
+
+'Used to specify a particular datatype in API calls such as MKeyOffset
+Global Const DATA_TYPE_STRING = 0
+Global Const DATA_TYPE_FLOAT = 2
+Global Const DATA_TYPE_INTEGER = 1
+Global Const DATA_TYPE_DATE = 3
+Global Const DATA_TYPE_TIME = 4
+Global Const DATA_TYPE_LOGICAL = 7
+
+
+' Application Parameter Passing Sections:
+Global Const PRMSECTION_VBRDT = "[VBRDT]"
+Global Const PRMSECTION_BSL = "[BSL]"
+Global Const PRMSECTION_TI = "[TI]"
+
+'Used for locating forms on screen
+Global Const PARENT_LEFT = 0
+Global Const PARENT_TOP = 0
+Global Const PARENT_WIDTH = 6360
+Global Const PARENT_HEIGHT = 1170
+Global Const PARENT_HEIGHT_NOTB = 690   ' for use when the toolbar is floating
+
+Global c1 As Integer, c2 As Integer, c3 As Integer, c4 As Integer, c5 As Integer, c6 As Integer
+Global c7 As Integer, c8 As Integer, c9 As Integer, c10 As Integer, c11 As Integer, c12 As Integer
+Global serr As Integer, serr1 As Integer, serr2  As Integer, serr3 As Integer, serr4 As Integer
+Global serr5 As Integer, serr6 As Integer, serr7 As Integer, serr8 As Integer, serr9 As Integer
+Global serr10 As Integer, serr11 As Integer, serr12 As Integer
+
+Global NULLDATE As Sdate
+
+Type PES
+
+AccessNbr            As Integer
+Administrator        As Integer
+BaseCuryID           As String * 4
+BeforeReport         As Integer
+BegRI_ID             As Integer
+ComputerName         As String * 21
+CpnyID               As String * 10                 ' SQLPort2
+CpnyName             As String * 30
+CurrTitle            As String * 80
+CustomLevel          As String * 1
+CustomUserId         As String * 47
+DBName               As String * 21
+DBNameSystem         As String * 30
+DBServer             As String * 30
+DBServerSystem       As String * 30
+EndRI_ID             As Integer
+EnterKeyAsTAB        As Integer                     ' Should not be used in applications -- ignored by kernel
+ExcludeMacros        As Integer
+InitMode             As Integer
+Language             As String * 6
+NextProg             As String * 12
+PrintDestinationName As String * 80
+PrintIncludeCodes    As Integer
+PrintToFile          As Integer
+QMAction             As Integer
+QMMode               As Integer
+ScrnNbr              As String * 5
+Today                As Sdate
+UserId               As String * 47
+
+End Type
+
+Global bpes As PES, NPES As PES
+
+Type CuryInfo
+
+BaseCuryID                          As String * 4
+BaseDecPl                           As Integer
+CuryView                            As Integer
+EffDate                             As Sdate
+FieldsDisabled                      As Integer
+MultDiv                             As String * 1
+Rate                                As Double
+RateType                            As String * 6
+TranCuryId                          As String * 4
+TranDecPl                           As Integer
+User1                               As String * 30
+User2                               As String * 30
+User3                               As Double
+User4                               As Double
+
+End Type
+
+Global bCuryInfo As CuryInfo, nCuryInfo As CuryInfo
+
+'Currency Manager
+'Values for View - must correspond to #defines in define.h
+Global Const CURY_VIEW_TRAN = 0
+Global Const CURY_VIEW_BASE = 1
+
+'Currency Manager
+'Values to enable/disable fields in Currency Selection form
+Global Const CURYSEL_TRANCURYID = 1
+Global Const CURYSEL_RATETYPE = 2
+Global Const CURYSEL_ALL = 16384
+
+'Currency Manager
+'Values for flag parameter in CurrencyField call
+Global Const CURY_BASE_CALC = 0
+Global Const CURY_BASE_NOCALC = 1
+
+'Currency Manager
+'Values for flag parameter in CuryInfoEnable call
+Global Const CURY_INFO_SETGET = 0
+Global Const CURY_INFO_SETONLY = 1
+Global Const CURY_INFO_GETONLY = 2
+Global Const CURY_INFO_DISABLE = -1
+
+Global CNULL As Control
+Global FNULL As Form               ' VB4 Change
+Global PNULL As Control
+Global INULL As Integer
+
+Global Const APPLICRETURNPARMS = "ReturnParms"    ' Application return in screenexit()
+
+'from applic.c
+Declare Sub SetButton Lib "swimapi.dll" (ByVal ButtonIds%, ByVal level%, ByVal OnFlag%)
+Declare Function ApplGetParms Lib "swimapi.dll" () As String
+Declare Sub ApplSetfocus Lib "swimapi.dll" Alias "#110" (ByVal hctl As Control)    ' Added ByVal for VB4
+Declare Function ApplGetReturnParms Lib "swimapi.dll" Alias "#111" () As String
+Declare Function ApplGetParmValue Lib "swimapi.dll" (ByVal pSection$, ByVal pEntry$) As String
+Declare Sub ApplSetParmValue Lib "swimapi.dll" Alias "#112" (ByVal pSection$, ByVal pEntry$, ByVal pValue$)
+
+'from autonbr.c
+Declare Function AutoNbrDefault Lib "swimapi.dll" (ByVal ctrl As Control, ByVal sqlcmd$, ByVal ctrl1 As Control, ByVal ctrl2 As Control) As Integer
+Declare Sub SetAutoNbrFlag Lib "swimapi.dll" (ByVal ctrl As Control, ByVal ActiveFlg%)
+
+'from control.c
+Declare Sub SetDefaults Lib "swimapi.dll" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control)
+Declare Sub Level_SetDefaults Lib "swimapi.dll" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control, ByVal lvl%)
+Declare Sub SetKeysEnabledOnly Lib "swimapi.dll" Alias "#113" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control, ByVal action_flag%)
+Declare Sub SetProps Lib "swimapi.dll" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control, ByVal propname$, prop_data As Variant)
+
+'from custimp.c
+Declare Function ExportCustom Lib "swimapi.dll" (ByVal screennbr$, ByVal EntityId$, ByVal BegSeqVal%, ByVal EndSeqVal%, ByVal FileName$, ByVal FileAppend%) As Integer
+Declare Function ImportCustom Lib "swimapi.dll" (ByVal FileName$, ByVal Conflicts%, ByVal Errors%) As Integer
+
+'from dateapi.c
+Declare Function GetModulePeriod Lib "swimapi.dll" Alias "#116" (ByVal modnbr$) As String
+Declare Function DateCheck Lib "swimapi.dll" Alias "#117" (ByVal DateStr$) As Integer
+Declare Function PeriodCheck Lib "swimapi.dll" Alias "#118" (ByVal Period$) As Integer
+Declare Sub StrToDate Lib "swimapi.dll" Alias "#310" (ByVal DateStr$, dateval As Sdate)
+Declare Function DateToStr Lib "swimapi.dll" Alias "#119" (dateval As Sdate) As String
+Declare Function DateToStrSep Lib "swimapi.dll" Alias "#120" (dateval As Sdate) As String
+Declare Sub StrToTime Lib "swimapi.dll" Alias "#121" (ByVal timestr$, timeval As Stime)
+Declare Function TimeToStr Lib "swimapi.dll" Alias "#122" (timeval As Stime) As String
+Declare Function DateMinusDate Lib "swimapi.dll" Alias "#123" (date1 As Sdate, date2 As Sdate) As Long
+Declare Sub DatePlusDays Lib "swimapi.dll" Alias "#124" (date1 As Sdate, ByVal addindays%, enddate As Sdate)
+Declare Function DateCmp Lib "swimapi.dll" Alias "#125" (date1 As Sdate, date2 As Sdate) As Integer
+Declare Function PeriodPlusPerNum Lib "swimapi.dll" Alias "#126" (ByVal ppyyyy$, ByVal Number%) As String
+Declare Function PeriodMinusPeriod Lib "swimapi.dll" Alias "#127" (ByVal period1$, ByVal period2$) As Integer
+Declare Sub DatePlusMonthSetDay Lib "swimapi.dll" Alias "#128" (date1 As Sdate, ByVal monthval%, ByVal dayval%, date2 As Sdate)
+Declare Sub GetSysDate Lib "swimapi.dll" Alias "#129" (currdate As Sdate)
+Declare Sub GetSysTime Lib "swimapi.dll" Alias "#130" (currtime As Stime)
+Declare Function DateToIntlStr Lib "swimapi.dll" (dval As Sdate) As String
+Declare Sub IntlStrToDate Lib "swimapi.dll" (ByVal DateStr$, dateval As Sdate)
+
+'from detail.c
+Declare Sub MSet Lib "swimapi.dll" Alias "#303" (ByVal ctrl As Control, ByVal valstr$)
+Declare Sub DetailLoad Lib "swimapi.dll" Alias "#131" (ByVal ctrl As Control)
+Declare Sub MSetProp Lib "swimapi.dll" Alias "#132" (ByVal ctrl As Control, ByVal propname$, prop_data As Variant)
+Declare Sub DetailSave Lib "swimapi.dll" Alias "#133" (ByVal cursor%, ByVal ctrl As Control, ByVal recname$)
+Declare Function MGetDelHandle Lib "swimapi.dll" Alias "#134" (ByVal hgrid As Control) As Integer
+
+'from display.c
+Declare Sub DispField Lib "swimapi.dll" (ByVal ctrl As Control)
+Declare Sub DispFields Lib "swimapi.dll" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control)
+Declare Sub DisplayMode Lib "swimapi.dll" Alias "#136" (ByVal OnFlag%)
+Declare Sub DisplayModeSetprops Lib "swimapi.dll" Alias "#137" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control, ByVal propname$, prop_data As Variant)
+
+'from fldchk.c
+Declare Function CallChks Lib "swimapi.dll" Alias "#287" (ByVal formx As Form, ByVal ctrlbeg As Control, ByVal ctrlend As Control, ByVal call_applic%, ByVal chk_detail_flds%) As Integer
+
+'from floatapi.c
+Declare Function FPRnd Lib "swimapi.dll" Alias "#99" (ByVal dbl As Double, ByVal precision As Integer) As Double
+Declare Function FPAdd Lib "swimapi.dll" (ByVal dbl1 As Double, ByVal dbl2 As Double, ByVal precision As Integer) As Double
+Declare Function FPSub Lib "swimapi.dll" (ByVal dbl1 As Double, ByVal dbl2 As Double, ByVal precision As Integer) As Double
+Declare Function FPMult Lib "swimapi.dll" (ByVal dbl1 As Double, ByVal dbl2 As Double, ByVal precision As Integer) As Double
+Declare Function FPDiv Lib "swimapi.dll" (ByVal dbl1 As Double, ByVal dbl2 As Double, ByVal precision As Integer) As Double
+Declare Function FToA Lib "swimapi.dll" (ByVal dbl As Double, ByVal precision As Integer) As String
+Declare Function GetPrecision Lib "swimapi.dll" (ByVal precision%) As Integer
+
+'from form.c
+Declare Sub LoadFormEx Lib "swimapi.dll" (ByVal formctrl As Form, ByVal formwnd As Long)
+Declare Sub HideForm Lib "swimapi.dll" (ByVal formx As Form)
+
+'from levels.c
+Declare Sub SetLevelChg Lib "swimapi.dll" Alias "#138" (ByVal level%, ByVal chgflg%)
+Declare Function TestLevelChg Lib "swimapi.dll" Alias "#139" (ByVal level%) As Integer
+
+
+'from marray.c
+' mopen  exposed thru typelib
+' mopen8  exposed thru typelib
+' MKeyFind exposed thru typelib
+' mkeyfld exposed thru typelib
+' mkeyoffset exposed thru typelib
+Declare Sub MClose Lib "swimapi.dll" Alias "#263" (ByVal handle%)
+Declare Sub MLoad Lib "swimapi.dll" Alias "#265" (ByVal handle%, ByVal cursor%)
+Declare Sub MClear Lib "swimapi.dll" Alias "#266" (ByVal handle%)
+Declare Function MFirst Lib "swimapi.dll" Alias "#267" (ByVal handle%, maintflg%) As Integer
+Declare Function MNext Lib "swimapi.dll" Alias "#268" (ByVal handle%, maintflg%) As Integer
+Declare Function MLast Lib "swimapi.dll" Alias "#269" (ByVal handle%, maintflg%) As Integer
+Declare Function MPrev Lib "swimapi.dll" Alias "#270" (ByVal handle%, maintflg%) As Integer
+Declare Function MDelete Lib "swimapi.dll" Alias "#271" (ByVal handle%, maintflg%) As Integer
+Declare Sub MInsert Lib "swimapi.dll" Alias "#272" (ByVal handle%)
+Declare Sub MDisplay Lib "swimapi.dll" Alias "#273" (ByVal handle%)
+Declare Sub MUpdate Lib "swimapi.dll" Alias "#274" (ByVal handle%)
+Declare Function MArrayCnt Lib "swimapi.dll" Alias "#275" (ByVal handle%) As Integer
+Declare Function MSetLineStatus Lib "swimapi.dll" Alias "#276" (ByVal handle%, ByVal Status%) As Integer
+Declare Function MGetLineStatus Lib "swimapi.dll" Alias "#277" (ByVal handle%) As Integer
+Declare Sub MKey Lib "swimapi.dll" Alias "#279" (ByVal handle%, ByVal segnum%, ByVal fieldName$, ByVal ascending%)
+Declare Sub MKeyHctl Lib "swimapi.dll" Alias "#280" (ByVal handle%, ByVal segnum%, ByVal hctl As Control, ByVal ascending%)
+Declare Sub MSetRow Lib "swimapi.dll" Alias "#283" (ByVal handle%, ByVal row%)
+Declare Function MGetRowNum Lib "swimapi.dll" Alias "#284" (ByVal handle%) As Integer
+Declare Function MCallChks Lib "swimapi.dll" Alias "#285" (ByVal handle%, ByVal ctrlbeg As Control, ByVal ctrlend As Control) As Integer
+Declare Sub MSort Lib "swimapi.dll" Alias "#286" (ByVal handle%)
+
+'from messapi.c
+Declare Sub Mess Lib "swimapi.dll" (ByVal messno%)
+Declare Sub Messf Lib "swimapi.dll" (ByVal messno%, ByVal arg0$, ByVal arg1$, ByVal arg2$, ByVal arg3$, ByVal arg4$, ByVal arg5$)
+Declare Sub MessBox Lib "swimapi.dll" (ByVal msg$, ByVal msgtype%, ByVal title$)
+Declare Function MessResponse Lib "swimapi.dll" () As Integer
+Declare Function MessGetText Lib "swimapi.dll" (ByVal messno%) As String
+
+'from miscapi.c
+Declare Sub IncrStrg Lib "swimapi.dll" Alias "#140" (ByVal buffer$, ByVal length%, ByVal delta%)
+
+'from noteapi.c
+Declare Function NoteCopy Lib "swimapi.dll" Alias "#304" (ByVal SourceNoteId As Long, ByVal DestRecordType$) As Long
+
+'from process.c
+Declare Sub Status Lib "swimapi.dll" (ByVal msgno%, ByVal fatalflg%, ByVal idstrng$, ByVal log_disp_flg%)
+Declare Sub SetRestart Lib "swimapi.dll" (cursor%)
+
+'from pv.c
+Declare Function PVChk Lib "swimapi.dll" (ByVal ctrl As Control, cursor%, ByVal keyval$) As Integer
+
+'from report.c
+Declare Function SwimGetProfile Lib "swimapi.dll" (ByVal Section$, ByVal entry$, ByVal Default$, ByVal size%, ByVal Profilename$) As String
+Declare Function SwimWriteProfile Lib "swimapi.dll" (ByVal Section$, ByVal entry$, ByVal EString$, ByVal Profilename$) As Integer
+
+'from sqlapi.c
+Declare Function SParm Lib "swimapi.dll" (ByVal sval$) As String
+Declare Function DParm Lib "swimapi.dll" (dval As Sdate) As String
+Declare Function FParm Lib "swimapi.dll" (ByVal fval#) As String
+Declare Function IParm Lib "swimapi.dll" (ByVal ival&) As String
+Declare Sub SDelete Lib "swimapi.dll" (ByVal cursor%, ByVal recordname$)
+Declare Function SDeleteAll Lib "swimapi.dll" (ByVal cursor%, ByVal recordname$) As Integer
+Declare Sub sql Lib "swimapi.dll" Alias "Sql" (cursor%, ByVal psql$)
+Declare Sub sqlNoWait Lib "swimapi.dll" (cursor%, ByVal psql$)
+Declare Sub SqlExec Lib "swimapi.dll" (ByVal cursor%)
+Declare Sub TranBeg Lib "swimapi.dll" (ByVal abortable%)
+Declare Sub TranEnd Lib "swimapi.dll" ()
+Declare Sub TranAbort Lib "swimapi.dll" ()
+Declare Function TranStatus Lib "swimapi.dll" () As Integer
+Declare Sub SqlCursor Lib "swimapi.dll" (cursor%, ByVal flags%)
+Declare Sub SqlCursorEx Lib "swimapi.dll" (cursor%, ByVal flags%, ByVal CursorName$, ByVal TabNames$, ByVal UpdateTabNames$)
+Declare Sub SqlFree Lib "swimapi.dll" (cursor%)
+Declare Sub SqlSubst Lib "swimapi.dll" (ByVal cursor%, ByVal parmname$, ByVal parmval$)
+Declare Function SqlErr Lib "swimapi.dll" () As Integer
+Declare Sub SqlErrException Lib "swimapi.dll" (ByVal flag%, ByVal errval%)
+Declare Sub SqlRowCntrs Lib "swimapi.dll" (ByVal handle%, ByVal cursor%)
+
+'from cury.c
+Declare Sub GetCuryRate Lib "swimapi.dll" Alias "#300" ()
+Declare Sub CurySelFieldEnable Lib "swimapi.dll" Alias "#299" (ByVal FieldIds%, ByVal EnabledFlag%)
+Declare Function ChkCuryRateType Lib "swimapi.dll" Alias "#288" (ByVal RateType$) As Integer
+Declare Sub CuryInfoGet Lib "swimapi.dll" Alias "#294" (ByVal lvl%)
+Declare Sub CuryInfoSet Lib "swimapi.dll" Alias "#295" (ByVal lvl%)
+Declare Sub CuryInfoInit Lib "swimapi.dll" Alias "#296" ()
+Declare Sub CuryRateTypeSet Lib "swimapi.dll" Alias "#297" (ByVal RateType$)
+Declare Sub CuryEffDateSet Lib "swimapi.dll" Alias "#290" (ByVal EffDate$)
+Declare Sub CuryInfoEnable Lib "swimapi.dll" Alias "#293" (ByVal lvl%, ByVal flag%)
+Declare Sub CuryFieldCalcSet Lib "swimapi.dll" Alias "#291" (ByVal ctrl As Control, ByVal flags%)
+Declare Sub CuryIdSet Lib "swimapi.dll" Alias "#292" (ByVal CuryId$)
+Declare Sub CuryResetBase Lib "swimapi.dll" Alias "#298" (ByVal BaseCuryID$)
+Declare Function GetPrecCury Lib "swimapi.dll" Alias "#322" (ByVal CuryId$) As Integer
+
+'from exports
+Declare Sub SetStatusBarText Lib "swimapi.dll" Alias "#597" (ByVal StatusBarText As String, ByVal ToolTip As String)
+Declare Function NewRecord Lib "swimapi.dll" (ByVal level As Integer, ByVal InsertAtNextLocation As Boolean) As Boolean
+Declare Function SetObjectValue Lib "swimapi.dll" Alias "#601" (ByVal ctrl As Control, CtrlValue As Variant) As Integer
+Declare Sub SetUnattendedMode Lib "swimapi.dll" Alias "#602" (ByVal ModeFlag As Integer)
+Declare Function IsUnattendedMode Lib "swimapi.dll" Alias "#603" () As Integer
+
+' from ccpapi2.c
+' Save template LevelNbr parameter values
+Global Const CCPAllLevels = -1
+Global Const CCPSelectedFields = -2
+Declare Sub SaveTemplate Lib "swimapi.dll" Alias "#423" (ByVal TemplateId$, ByVal templatedesc$, ByVal UserId$, ByVal LowerLevelData%, ByVal levelnbr%)
+Declare Function PasteTemplate Lib "swimapi.dll" Alias "#424" (ByVal TemplateId$) As Integer
+
+Global Const BTISqlType = 0
+Global Const MSSqlType = 1
+
+Declare Function GetSqlType Lib "swimapi.dll" () As Integer
+Declare Function IS_TI Lib "swimapi.dll" Alias "#301" () As Integer
+Declare Sub SetTI_Alias_Level Lib "swimapi.dll" Alias "#311" (ByVal ctrl As Control, ByVal level As Integer)
+Declare Function IsMultiCompany Lib "swimapi.dll" Alias "#571" () As Integer
+
+Declare Sub AddressofScreenExit Lib "swimapi.dll" (ByVal FunctionPtr As Long)
+Declare Function IsParentOf Lib "swimapi.dll" (ByVal TestParent As Control, ByVal TestChild As Control) As Integer
+
+Declare Function IS_AppServer Lib "swimapi.dll" Alias "#596" () As Integer
+
+Declare Sub Assign_VBversion Lib "swimapi.dll" Alias "#598" (ByVal VersionNbr As Integer)
+
+Global Const INTEGRATEDLOGONFAILED = 10
+Global Const INTEGRATEDLOGONDENIED = 11
+Global Const LOGONSUCCESS = 0
+
+'[cmokma] CR205788 Constant to indicate an adhoc RAISERROR that was changed in SWIM from 50000
+Global Const SWIMRAISERROR = 32767

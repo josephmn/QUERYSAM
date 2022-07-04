@@ -1,0 +1,129 @@
+       
+CREATE Proc GEN.AM_Movimiento_MigrarVentas  --- GEN.AM_Movimiento_MigrarVentas '201710'                                                       
+@xPeriodo char(6) =''                                                        
+as                                                      
+if @xPeriodo =''                                                  
+ select @xPeriodo =  GEN.ObtenerPeriodo(Getdate())                                                    
+             
+--exec VEN.ValidarRepetidos_Migracion  @xPeriodo                                    
+exec Llenar_VRegVtasAsientoAL @xPeriodo                                                        
+exec Llenar_CfM_DetDesc                                                        
+exec Llenar_CFM_DetPago @xPeriodo                                                                                                                                                                                 
+                                                         
+set language english                                                                     
+            
+print 'Ventas'                                                        
+  
+--delete from FACALTOMAYO.AMCAF2017APP.dbo.detalleVentaFE       
+        
+insert into FACALTOMAYO.AMCAF2017APP.dbo.detalleVentaFE (id ,NumSerie ,NumDoc ,IdLocal ,NumTienda ,FechaNegocio ,Fecha ,invtid ,NombreLargo ,NombreCorto ,Familia ,          
+Precio ,QTY ,Subtotal ,Igv ,TOTAL_venta ,CostoUnit ,CostoExtend ,Taxcat)            
+select v.id ,v.NumSerie ,v.NumDoc ,v.IdLocal ,v.NumTienda ,v.FechaNegocio ,v.Fecha ,v.invtid ,v.NombreLargo ,v.NombreCorto ,v.Familia ,v.Precio ,          
+(case when v.QTY<0 then v.QTY *-1 else v.QTY end )QTY ,          
+(case when v.Subtotal<0 then v.Subtotal *-1 else v.Subtotal end ) Subtotal ,          
+(case when v.Igv<0 then v.Igv *-1 else v.Igv end ) Igv ,          
+(case when v.TOTAL_venta<0 then v.TOTAL_venta *-1 else v.TOTAL_venta end )TOTAL_venta ,          
+(case when v.CostoUnit<0 then v.CostoUnit *-1 else v.CostoUnit end )CostoUnit ,          
+(case when v.CostoExtend<0 then v.CostoExtend *-1 else v.CostoExtend end )CostoExtend ,v.Taxcat             
+ from detalleVentaFE V inner join   V_CajaCerrada C on V.FechaNegocio =C.FechaNegocio and V.IdLocal = C.IdLocal                
+left join  FACALTOMAYO.AMCAF2017APP.dbo.detalleVentaFE S                                                          
+on V.NumTienda =S.NumTienda    collate Modern_Spanish_CI_AS     and  V.FechaNegocio =S.FechaNegocio  --collate Modern_Spanish_CI_AS                  
+ and V.id =S.id     collate Modern_Spanish_CI_AS                                                
+where   S.NumTienda is null             
+  
+  
+  
+                                                        
+insert into FACALTOMAYO.AMCAF2017APP.dbo.CFM_RegVtas                                                        
+(C1, NumTienda, Chk_Num, TipoDoc, Fecha                                                        
+, Hora, NumSerie, NumDoc                                                        
+, RazonSocial1, RazonSocial2, RazonSocial3, RUC, C2, C3, Subtotal, AutoServicio, IGV, Total                                                        
+, Propina, NumDocAnulacion, NumCajero, NombCajero, NumEmpleado, NombEmpleado, PrimerNombEmpleado, Apellido                                                        
+, SecuenciaEmpleado, NumRVC, NombRVC, NumCaja, NombCaja, FechaNegocio,pago)--,user06)                                                                   
+select                                                        
+ltrim(rtrim(V.C1)) C1, convert(int,V.NumTienda) NumTienda, ltrim(rtrim(V.Identificador)) Identificador,isnull(V.TipoDoc,'') TipoDoc,convert(char(10),V.Fecha,105) Fecha                                                        
+, V.Hora, left(ltrim(rtrim(V.NumSerie)),24) NumSerie, left(V.NumDoc,24) NumDoc                                                        
+, left(V.RazonSocial1,24) RazonSocial1, V.RazonSocial2, V.RazonSocial3, V.RUC, V.C2, C3=cuenta, (V.Subtotal) Subtotal, V.AutoServicio, V.IGV, V.Total                                                        
+, V.Propina,case when V.NumDocAnulacion='' then null else V.NumDocAnulacion end, V.NumCajero, V.NombCajero, V.NumEmpleado,left(V.NombEmpleado,8) , V.PrimerNombEmpleado, V.Apellido                                                        
+,'' SecuenciaEmpleado,case when V.NumRVC is not NULL then '1' else null end NumRVC,estadoAnulado NombRVC, V.NumCaja, V.NombCaja, convert(char(10),V.FechaNegocio,105) FechaNegocio,TotalMN--,V.User06                                                        
+from VRegVtasAsiento V                                                        
+left join FACALTOMAYO.AMCAF2017APP.dbo.CFM_RegVtas S                                                        
+on V.Identificador=S.Chk_Num collate Modern_Spanish_CI_AS                                                        
+where 1 =1                                                        
+and S.Chk_Num  is null                                                        
+                                                        
+print 'DESCUENTOS'                                                        
+insert into FACALTOMAYO.AMCAF2017APP.dbo.CfM_DetDesc                                                        
+(Chk_Num, NumTienda, NumRVC, NombRVC, FechaNegocio, Porcentaje, NumDescuento                                   
+, NombDescuento, DSVC_DEF, ImporteDescuento, Referencia)                          
+              
+select                                                         
+V.Identificador , convert(int,V.NumTienda), case when V.NumRVC is not NULL then '1' else null end NumRVC ,'' NombRVC,convert(char(10),V.Fecha,105) FechaNegocio, V.Porcentaje                         
+, case when V.NumRVC is not NULL then '1' else null end NumDescuento                 
+, V.NombDescuento, '' DSVC_DEF, abs(V.ImporteDescuento)*-1 ImporteDescuento, V.Referencia                                                        
+from CfM_DetDesc V                                                        
+left join  FACALTOMAYO.AMCAF2017APP.dbo.CfM_DetDesc S                                                        
+on V.Identificador =S.Chk_Num collate Modern_Spanish_CI_AS                                                        
+where S.Chk_Num is null                                                        
+and not (left(V.Identificador,8) in ( 'CFTOTTUS','CFTOTTJP') and V.NombDescuento = 'EFECTIVO')                                                   
+                                                        
+print 'PAGOS'                                                      
+insert into FACALTOMAYO.AMCAF2017APP.dbo.CFM_DetPago                                                 
+(Chk_Num, NumTienda, NumRVC, NombRVC, FechaNegocio                                                        
+, Total, TotalPropina, Propina                                                        
+, NumTenderMedia, NombTenderMedia, Referencia)                                       
+                                                        
+select V.Identificador, convert(int,V.NumTienda) NumTienda, V.NumRVC, V.NomRVC, convert(char(10),V.FechaNegocio,105) FechaNegocio                                                        
+, V.Total, V.TotalPropina, V.Propina                                        
+, V.NumTenderMedia, V.NombTenderMedia, V.Referencia                                                        
+from CFM_DetPago V                                                        
+left join  FACALTOMAYO.AMCAF2017APP.dbo.CFM_DetPago S                                                        
+on V.Identificador =S.Chk_Num collate Modern_Spanish_CI_AS                                                        
+where S.Chk_Num is null                                                        
+and left(V.Identificador,8) not in ( 'CFTOTTUS','CFTOTTJP')                                                        
+                                                   
+insert into FACALTOMAYO.AMCAF2017APP.dbo.CFM_DetPago2                                                        
+(Chk_Num, NumTienda, NumRVC, NombRVC, FechaNegocio                                                        
+, Total, TotalPropina, Propina                                                        
+, NumTenderMedia, NombTenderMedia, Referencia                                                        
+,COrigen,EOrigen,CDestino,EDestino,Mon,TipoCambio,Tipo,ExportadoTr)                                                        
+                                                      
+select V.Identificador, convert(int,V.NumTienda) NumTienda, V.NumRVC, V.NombRVC, convert(char(10),V.FechaNegocio,120) FechaNegocio                                                        
+, V.Total, V.TotalPropina, V.Propina                                                        
+, V.NumTenderMedia, V.NombTenderMedia,right(ltrim(rtrim(V.Referencia)),20)                                                        
+,ltrim(rtrim(V.COrigen)) COrigen,ltrim(rtrim(V.EOrigen)) EOrigen,ltrim(rtrim(V.CDestino)) CDestino                                                        
+,ltrim(rtrim(V.EDestino)),ltrim(rtrim(V.Mon)) Mon,ltrim(rtrim(V.TipoCambio)) TipoCambio,0,''                                                        
+from CFM_DetPago2 V                                                        
+left join  FACALTOMAYO.AMCAF2017APP.dbo.CFM_DetPago2 S                                                        
+on V.Identificador =S.Chk_Num collate Modern_Spanish_CI_AS                                                        
+where S.Chk_Num is null                         
+and left(V.Identificador,8) not in ( 'CFTOTTUS','CFTOTTJP')             
+            
+           
+insert into FACALTOMAYO.AMCAF2017APP.dbo.CFM_ResItem            
+(NumTienda, FechaNegocio, STORE_NUMBER, STORE_ID, MENUITEM_NUMBER, MI_SEQ, NLU_NUMBER, MENUITEM_NAME1, MENUITEM_NAME2, MAJOR_GROUP_NUMBER, MAJOR_GROUP_NAME,             
+FAMILY_GROUP_NUMBER, FAMILY_GROUP_NAME, MI_GROUP_NUMBER, MI_GROUP_NAME, USE_SUB_LVL_PRICES_FLAG, PRICE1, MAIN_MLVL_NAME1, SUB_MLVL_NAME1, P1_SALES_QTY,             
+P1_SALES_TOTAL, P1_RETURN_QTY, P1_DISCOUNT_TOTAL, PRICE2, MAIN_MLVL_NAME2, SUB_MLVL_NAME2, P2_SALES_QTY, P2_SALES_TOTAL, P2_RETURN_QTY, P2_DISCOUNT_TOTAL,             
+PRICE3, MAIN_MLVL_NAME3, SUB_MLVL_NAME3, P3_SALES_QTY, P3_SALES_TOTAL, P3_RETURN_QTY, P3_DISCOUNT_TOTAL, PRICE4, MAIN_MLVL_NAME4, SUB_MLVL_NAME4,            
+ P4_SALES_QTY, P4_SALES_TOTAL, P4_RETURN_QTY, P4_DISCOUNT_TOTAL, PRICE5, MAIN_MLVL_NAME5, SUB_MLVL_NAME5, P5_SALES_QTY, P5_SALES_TOTAL, P5_RETURN_QTY,             
+ P5_DISCOUNT_TOTAL, PRICE6, MAIN_MLVL_NAME6, SUB_MLVL_NAME6, P6_SALES_QTY, P6_SALES_TOTAL, P6_RETURN_QTY, P6_DISCOUNT_TOTAL, PRICE7, MAIN_MLVL_NAME7,             
+ SUB_MLVL_NAME7, P7_SALES_QTY, P7_SALES_TOTAL, P7_RETURN_QTY, P7_DISCOUNT_TOTAL, PRICE8, MAIN_MLVL_NAME8, SUB_MLVL_NAME8, P8_SALES_QTY, P8_SALES_TOTAL,             
+ P8_RETURN_QTY, P8_DISCOUNT_TOTAL, PRICE9, MAIN_MLVL_NAME9, SUB_MLVL_NAME9, P9_SALES_QTY, P9_SALES_TOTAL, P9_RETURN_QTY, P9_DISCOUNT_TOTAL, PRICE10,             
+ MAIN_MLVL_NAME10, SUB_MLVL_NAME10, P10_SALES_QTY, P10_SALES_TOTAL, P10_RETURN_QTY, P10_DISCOUNT_TOTAL, SBTL_DISCOUNT_TOTAL, SP_ERROR)            
+             
+select v.NumTienda, V. FechaNegocio, V. STORE_NUMBER, V. STORE_ID, V. MENUITEM_NUMBER, V. MI_SEQ, V. MENUITEM_NUMBER NLU_NUMBER, V. MENUITEM_NAME1, V. MENUITEM_NAME2, V. MAJOR_GROUP_NUMBER, V. MAJOR_GROUP_NAME, V.             
+FAMILY_GROUP_NUMBER, V. FAMILY_GROUP_NAME, V. MI_GROUP_NUMBER, V. MI_GROUP_NAME, V. USE_SUB_LVL_PRICES_FLAG, V. PRICE1, V. MAIN_MLVL_NAME1, V. SUB_MLVL_NAME1, V. P1_SALES_QTY, V.             
+P1_SALES_TOTAL, V. P1_RETURN_QTY, V. P1_DISCOUNT_TOTAL, V. PRICE2, V. MAIN_MLVL_NAME2, V. SUB_MLVL_NAME2, V. P2_SALES_QTY, V. P2_SALES_TOTAL, V. P2_RETURN_QTY, V. P2_DISCOUNT_TOTAL, V.             
+PRICE3, V. MAIN_MLVL_NAME3, V. SUB_MLVL_NAME3, V. P3_SALES_QTY, V. P3_SALES_TOTAL, V. P3_RETURN_QTY, V. P3_DISCOUNT_TOTAL, V. PRICE4, V. MAIN_MLVL_NAME4, V. SUB_MLVL_NAME4, V.            
+ P4_SALES_QTY, V. P4_SALES_TOTAL, V. P4_RETURN_QTY, V. P4_DISCOUNT_TOTAL, V. PRICE5, V. MAIN_MLVL_NAME5, V. SUB_MLVL_NAME5, V. P5_SALES_QTY, V. P5_SALES_TOTAL, V. P5_RETURN_QTY, V.             
+ P5_DISCOUNT_TOTAL, V. PRICE6, V. MAIN_MLVL_NAME6, V. SUB_MLVL_NAME6, V. P6_SALES_QTY, V. P6_SALES_TOTAL, V. P6_RETURN_QTY, V. P6_DISCOUNT_TOTAL, V. PRICE7, V. MAIN_MLVL_NAME7, V.             
+ SUB_MLVL_NAME7, V. P7_SALES_QTY, V. P7_SALES_TOTAL, V. P7_RETURN_QTY, V. P7_DISCOUNT_TOTAL, V. PRICE8, V. MAIN_MLVL_NAME8, V. SUB_MLVL_NAME8, V. P8_SALES_QTY, V. P8_SALES_TOTAL, V.             
+ P8_RETURN_QTY, V. P8_DISCOUNT_TOTAL, V. PRICE9, V. MAIN_MLVL_NAME9, V. SUB_MLVL_NAME9, V. P9_SALES_QTY, V. P9_SALES_TOTAL, V. P9_RETURN_QTY, V. P9_DISCOUNT_TOTAL, V. PRICE10, V.             
+ MAIN_MLVL_NAME10, V. SUB_MLVL_NAME10, V. P10_SALES_QTY, V. P10_SALES_TOTAL, V. P10_RETURN_QTY, V. P10_DISCOUNT_TOTAL, V. SBTL_DISCOUNT_TOTAL, V. SP_ERROR             
+ from TB_CFM_ResItem V inner join V_CajaCerrada C on V.FechaNegocio =C.FechaNegocio and V.IdLocal = C.IdLocal             
+left join  FACALTOMAYO.AMCAF2017APP.dbo.CFM_ResItem S                                                        
+on V.NumTienda =S.NumTienda    collate Modern_Spanish_CI_AS     and  V.FechaNegocio =S.FechaNegocio   collate Modern_Spanish_CI_AS                
+ and V.MENUITEM_NUMBER =S.MENUITEM_NUMBER     collate Modern_Spanish_CI_AS                                              
+where   S.NumTienda is null                
+        
+        
