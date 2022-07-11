@@ -20,10 +20,10 @@ User3, User4, User5, User6, User7, User8, WhseLoc)
 
 SELECT ABCCode, AssemblyValid, BinType, CountStatus, Crtd_DateTime, Crtd_Prog, Crtd_User, CycleID, Descr, InclQtyAvail, InvtID, InvtIDValid, LastBookQty, LastCountDate, 
 LastVarAmt, LastVarPct, LastVarQty, LUpd_DateTime, LUpd_Prog, LUpd_User, MoveClass, NoteID, PickPriority, PutAwayPriority, ReceiptsValid, S4Future01, S4Future02, 
-S4Future03, S4Future04, S4Future05, S4Future06, S4Future07, S4Future08, S4Future09, S4Future10, S4Future11, S4Future12, SalesValid, Selected, 'CIXOBS', User1, User2, 
+S4Future03, S4Future04, S4Future05, S4Future06, S4Future07, S4Future08, S4Future09, S4Future10, S4Future11, S4Future12, SalesValid, Selected, 'LIMEXP', User1, User2, 
 User3, User4, User5, User6, User7, User8, WhseLoc 
 -- DELETE
-FROM LocTable where SiteID = 'CIXPT'
+FROM LocTable where SiteID = 'LIMCEN'
 
 
 INSERT ItemSite 
@@ -43,9 +43,11 @@ LUpd_DateTime, LUpd_Prog, LUpd_User, MaxOnHand, MfgLeadTime, MoveClass, NoteID, 
 QtyAlloc, 0, 0, 0, 0, 0, 0, 0, QtyOnKitAssyOrders, QtyOnPO, QtyOnTransferOrders, QtyShipNotInv, QtyWOFirmDemand, 
 QtyWOFirmSupply, QtyWORlsedDemand, QtyWORlsedSupply, ReordInterval, ReordPt, ReordPtCalc, ReordQty, ReordQtyCalc, ReplMthd, S4Future01, S4Future02, S4Future03, S4Future04, 
 S4Future05, S4Future06, S4Future07, S4Future08, S4Future09, S4Future10, S4Future11, S4Future12, SafetyStk, SafetyStkCalc, SalesAcct, SalesSub, SecondVendID, Selected, 
-ShipNotInvAcct, ShipNotInvSub, 'CIXOBS', StdCost, StdCostDate, StkItem, 0, Turns, UsageRate, User1, User2, User3, User4, User5, User6, User7, User8, VOvhStdCst, YTDUsage 
-from ItemSite where SiteID = 'CIXPT' AND InvtID NOT IN (SELECT InvtID FROM ItemSite WHERE SiteID <> 'MARKETING')
+ShipNotInvAcct, ShipNotInvSub, 'LIMEXP', StdCost, StdCostDate, StkItem, 0, Turns, UsageRate, User1, User2, User3, User4, User5, User6, User7, User8, VOvhStdCst, YTDUsage 
+from ItemSite where SiteID = 'LIMCEN' --AND InvtID NOT IN (SELECT InvtID FROM ItemSite WHERE SiteID <> 'MARKETING')
 
+
+--SELECT * FROM ItemSite WHERE SiteID = 'LIMEXP'
 
 
 insert into xAMNewItemSite 
@@ -62,7 +64,8 @@ S4Future11, S4Future12, Selected, SiteID, User1, User2, User3, User4, User5, Use
 
 SELECT CountStatus, Crtd_DateTime, Crtd_Prog, 'SYSADMIN', InvtID, LUpd_DateTime, LUpd_Prog, 'SYSADMIN', 0, 0, 0, 0, 
 0, S4Future01, S4Future02, S4Future03, S4Future04, S4Future05, S4Future06, S4Future07, S4Future08, S4Future09, S4Future10, 
-S4Future11, S4Future12, Selected, 'CIXOBS', User1, User2, User3, User4, User5, User6, User7, User8, WhseLoc FROM Location WHERE SiteID = 'CIXPT'
+S4Future11, S4Future12, Selected, 'LIMEXP', User1, User2, User3, User4, User5, User6, User7, User8, WhseLoc FROM Location WHERE SiteID = 'LIMCEN'
+
 
 
 insert into xamitemsite 
@@ -72,7 +75,6 @@ from xamitemsite where SiteId = 'CIXPT'
 AND InvtID NOT IN (SELECT InvtID FROM xamitemsite WHERE SiteId = 'CUSCO')
 
 --SELECT InvtID, COUNT(*) CONTEO FROM xamitemsite WHERE SiteId = 'CUSCO' GROUP BY InvtID HAVING COUNT(*) > 1
-
 
 
 SELECT InvtID, SiteID, QtyOnHand, LUpd_Prog, Crtd_Prog FROM Location --WHERE SiteID = 'CIXPT' --AND InvtID LIKE '21785%'
