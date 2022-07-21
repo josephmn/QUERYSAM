@@ -27,7 +27,7 @@
 
 declare @ALMACEN char(10), @COD_PROD char(10),  @qtyonhand FLOAT, @totcost FLOAT
 
-set @ALMACEN = 'CIXINSUMOS' set @COD_PROD =  '25425' 
+set @ALMACEN = 'HUAPT' set @COD_PROD =  '22061' 
 
 SET @qtyonhand = 10000 SET   @totcost = 0.007
 

@@ -11,10 +11,10 @@ SELECT * FROM xamPorIncent
 
 -- delete from xamPorIncent where user3 = '201806'
 --insert into xamPorIncent (tipo, cargo, Porcentaje, crdtDate, monto, user1, user2, user3, user4)
-select tipo, cargo, Porcentaje, crdtDate, monto, user1, user2, '202205', user4 from xamPorIncent where user3 = '202204'
+select tipo, cargo, Porcentaje, crdtDate, monto, user1, user2, '202206', user4 from xamPorIncent where user3 = '202205'
 
 --insert into xamPorIncentD (tipo, cargo, Porcentaje, Marca, crdtDate, monto, user1, user2, user3, user4, user5, user6, user7, user8, user9)
-SELECT tipo, cargo, Porcentaje, Marca, crdtDate, monto, user1, user2, '202205', user4, user5, user6, user7, user8, user9 FROM xamPorIncentD where user3 = '202204'
+SELECT tipo, cargo, Porcentaje, Marca, crdtDate, monto, user1, user2, '202206', user4, user5, user6, user7, user8, user9 FROM xamPorIncentD where user3 = '202205'
 
 
 select * 
